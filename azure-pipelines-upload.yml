@@ -1,0 +1,33 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  name: 'Default'
+
+variables:
+  FEED_NAME: 'python-packages-test'
+  PROJECT_NAME: 'secplayground'
+
+steps:
+- checkout: self
+  displayName: 'Checkout code'
+
+- script: |
+    pip install --upgrade pip
+    pip install build twine
+  displayName: 'Install build tools'
+
+- script: |
+    python -m build
+  displayName: 'Build package'
+
+- task: TwineAuthenticate@1
+  displayName: 'Authenticate Twine'
+  inputs:
+    artifactFeed: '$(PROJECT_NAME)/$(FEED_NAME)'
+
+- script: |
+    twine upload -r $(FEED_NAME) --config-file $(PYPIRC_PATH) dist/*
+  displayName: 'Upload to Azure Artifacts'
